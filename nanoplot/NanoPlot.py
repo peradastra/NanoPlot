@@ -93,8 +93,9 @@ def main():
                 
         if args.barcoded:
             main_path = settings["path"]
-            for barc in list(datadf["barcode"].unique()):
-                dfbarc = datadf[datadf["barcode"] == barc]
+            barcode_column = barcode_column_name(datadf)
+            for barc in list(datadf[barcode_column].unique()):
+                dfbarc = datadf[datadf[barcode_column] == barc]
                 if len(dfbarc) > 5:
                     logging.info(f"Processing {barc}")
                     settings["title"] = barc
@@ -125,16 +126,22 @@ def make_stats(datadf, settings, suffix, tsv_stats=True):
     stats_df = nanomath.write_stats(datadfs=[datadf], outputfile=statsfile, as_tsv=tsv_stats)
     logging.info("Calculated statistics")
     if settings["barcoded"]:
-        barcodes = list(datadf["barcode"].unique())
+        barcode_column = barcode_column_name(datadf)
+        barcodes = list(datadf[barcode_column].unique())
         statsfile = settings["path"] + "NanoStats_barcoded.txt"
         stats_df = nanomath.write_stats(
-            datadfs=[datadf[datadf["barcode"] == b] for b in barcodes],
+            datadfs=[datadf[datadf[barcode_column] == b] for b in barcodes],
             outputfile=statsfile,
             names=barcodes,
             as_tsv=tsv_stats,
         )
     return stats_df if tsv_stats else statsfile
 
+def barcode_column_name(datadf):
+    if "barcode_arrangement" in datadf.columns:
+        return "barcode_arrangement"
+    else:
+        return "barcode"
 
 def make_plots(datadf, settings):
     """
